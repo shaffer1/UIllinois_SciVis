@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+    <title>CS 519: Scientific Visualization</title>
+</head>
+	<body onload="main()">
+    <body>
+        <form id="input_form">
+        <fieldset>
+        <legend>Visualization Parameters</legend>
+         Draw Grid <input type="checkbox" id="show_grid"><br>
+         Grid Resolution <input type="text" id="grid_res" value="10"><br>
+         Draw Gradients <input type="checkbox" id="show_grad"><br>
+         Line Scale <input type="text" id="line_scale" value="1.0"><br>
+         Scalar Value
+         <input type="radio" name="scalar" id="gaussian" value="gaussian" checked> Gaussian
+         <input type="radio" name="scalar" id="divergence" value="divergence"> Divergence
+         <input type="radio" name="scalar" id="vorticity" value="vorticity"> Vorticity Magnitude<br>
+         Color Map
+         <input type="radio" name="color" id="rainbow" value="rainbow"checked > Rainbow
+         <input type="radio" name="color" id="greyscale" value="greyscale"> Greyscale<br>
+        </fieldset>
+        </form>
+        <button onclick="render()">Render</button>
+		<canvas id ="example" width ="400" height ="400">
+			Please use a browser that supports "canvas"
+		</canvas >
+		<script src =" VectorVis.js" >
+		</script >
+	</body>
+</html>
