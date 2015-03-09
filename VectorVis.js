@@ -26,115 +26,6 @@
 
 
 
-//--------------------------------------------------------
-// A Simple 2D Grid Class
-var UGrid2D = function(min_corner,max_corner,resolution){
-  this.min_corner=min_corner;
-  this.max_corner=max_corner;
-  this.resolution=resolution;
-  console.log('UGrid2D instance created');
-}
-
-
-// Method: draw_grid
-// Draw the grid lines
-
-UGrid2D.prototype.draw_grid = function(canvas){
-	  var ctx = canvas.getContext('2d');
-	  loc=[0,0];
-	  delta = canvas.width/this.resolution;
-	  for (var i=0;i<=this.resolution;i++)
-	  {
-	  	ctx.moveTo(i*delta, 0);
-      	ctx.lineTo(i*delta, canvas.height-1);
-      	ctx.lineWidth = 1;
-      	// set line color
-      	ctx.strokeStyle = '#000000';
-      	ctx.stroke();
-	   }
-	   loc=[0,0];
-
-	  	delta = canvas.height/this.resolution;
-
-	  for (var i=0;i<=this.resolution;i++)
-	  {
-	  	ctx.moveTo(0,i*delta);
-      	ctx.lineTo(canvas.width-1,i*delta);
-      	ctx.lineWidth = 1;
-      	// set line color
-      	ctx.strokeStyle = '#000000';
-      	ctx.stroke();
-	   }
-}
-
-// Methods to add later for sampled data
-// Method: get_resolution
-
-// Method: get_scalar
-
-// Method: get_gradient
-
-// Method: get_divergence
-
-// Method: get_vorticity
-
-// Method: compute_scalars
-
-// Method: compute_gradients
-
-// Method: compute_divergence
-
-// Method: compute_vorticity
-
-// Method: draw_glyphs
-
-UGrid2D.prototype.draw_glyphs = function(scl,vec_func,canvas){
-    var ctx = canvas.getContext('2d');
-	  loc=[0,0];
-	  delta_x = canvas.width/this.resolution;
-    delta_y = canvas.height/this.resolution;
-
-    ctx.beginPath();
-
-    console.log("Draw glyphs")
-	  for (var i=0;i<=this.resolution;i++)
-      for(var j=0;j<=this.resolution;j++)
-	      {
-
-         pix = [i*delta_x,j*delta_y];
-         var pt = pixel2pt(canvas.width,canvas.height,x_extent,y_extent,pix[0],pix[1]);
-         var grad = vec_func(pt);
-         console.log("GRADIENT: ",grad[0],grad[1]);
-
-
-
-         var dest =[pt[0]+grad[0],pt[1]+grad[1]]
-         var pixdest = pt2pixel(canvas.width,canvas.height,x_extent,y_extent,dest[0],dest[1]);
-
-         // Scale
-         pixdest[0]=pix[0]+((pixdest[0]-pix[0])*scl);
-         pixdest[1]=pix[1]+((pixdest[1]-pix[1])*scl);
-
-         var ctx = canvas.getContext('2d');
-
-         ctx.beginPath();
-         ctx.arc(pix[0],pix[1],2,0,2*Math.PI);
-         //ctx.fillStyle="red";
-         ctx.fill();
-         //ctx.stroke();
-         console.log("Draw line ", pix[0],pix[1], " to ", pixdest[0],pixdest[1]);
-         ctx.beginPath();
-	       ctx.moveTo(pix[0], pix[1]);
-         ctx.lineTo(pixdest[0],pixdest[1]);
-         ctx.lineWidth = 1;
-         ctx.strokeStyle = '#000000';
-         ctx.stroke();
-        }
-}
-
-//End UGrid2D--------------------------------------------
-
-
 
 //-------------------------------------------------------
 // Global variables
@@ -232,6 +123,11 @@ for (var y=0;y<canvas.height;y++)
     var scl = parseFloat(document.getElementById("line_scale").value);
     myGrid.draw_glyphs(scl, gaussian_gradient,canvas);
   }
+  // Draw streamlines if necessary
+  if (document.getElementById("show_streamlines").checked){
+    var seeds = parseFloat(document.getElementById("seeds").value);
+    draw_streamlines(canvas,ctx,seeds);
+  }
 }
 
 //--------------------------------------------------------
@@ -259,55 +155,32 @@ function pt2pixel(width,height,x_extent,y_extent, p_x,p_y){
 	}
 
 //--------------------------------------------------------
-//A simple Gaussian function
-function gaussian(pt){
-	return Math.exp(-(pt[0]*pt[0]+pt[1]*pt[1]));
-}
+// Draw randomly seeded stremalines
 
-//--------------------------------------------------------
-//The infamous rainbow color map, normalized to the data range
-function rainbow_colormap(fval,fmin,fmax){
-	var dx=0.8;
-	var fval_nrm = (fval-fmin)/(fmax-fmin);
-	var g = (6.0-2.0*dx)*fval_nrm +dx;
-	var R = Math.max(0.0,(3.0-Math.abs(g-4.0)-Math.abs(g-5.0))/2.0 )*255;
-	var G = Math.max(0.0,(4.0-Math.abs(g-2.0)-Math.abs(g-4.0))/2.0 )*255;
-	var B = Math.max(0.0,(3.0-Math.abs(g-1.0)-Math.abs(g-2.0))/2.0 )*255;
-	color = [Math.round(R),Math.round(G),Math.round(B),255];
-	return color;
-}
-
-//--------------------------------------------------------
-//Functions for you to write
-
-function greyscale_map(fval,fmin,fmax){
-  var c=255*((fval-fmin)/(fmax-fmin));
-  var color = [Math.round(c),Math.round(c),Math.round(c),255];
-	return color;
-}
-
-function gaussian_gradient(pt){
-  var dx = -2*pt[0]*gaussian(pt);
-  var dy = -2*pt[1]*gaussian(pt);
-	return [dx,dy];
-}
-
-function gaussian_divergence(pt){
-  var gradient =  gaussian_gradient(pt);
-	return gradient[0]+gradient[1];
-}
-
-function gaussian_vorticity_mag(pt){
-	return 0;
-}
-
-function normalize2D(v){
-  var len = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
-  if (len == 0.0)
+function draw_streamlines(canvas,ctx,num){
+  for(var i=0;i<num;i++)
     {
-       console.log("Zero length gradient");
-       return ([0.0,0.0]);
+    //Generate random seed
+    var x = (2.0*Math.random())-1.0;
+    var y = (2.0*Math.random())-1.0;
+    var h = 5.0*(x_extent[1]-x_extent[0])/canvas.width;
+    var steps = 20.0
+    var linpts = euler_integration([x,y],h,steps,gaussian_gradient);
+
+    //draw the line
+     var pt = linpts[0];
+     var pix = pt2pixel(canvas.width,canvas.height,x_extent,y_extent,pt[0],pt[1]);
+     ctx.beginPath();
+     ctx.moveTo(pix[0], pix[1]);
+     for(var j=1;j<linpts.length;j++){
+         pt = linpts[j];
+         pixdest = pt2pixel(canvas.width,canvas.height,x_extent,y_extent,pt[0],pt[1]);
+	       ctx.lineTo(pixdest[0],pixdest[1]);
+         ctx.lineWidth = 1;
+         ctx.strokeStyle = '#FFFFFF';
+         ctx.stroke();
+       }
     }
-  return [v[0]/len,v[1]/len];
 }
+
 
