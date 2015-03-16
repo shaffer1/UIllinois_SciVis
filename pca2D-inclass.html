@@ -25,7 +25,8 @@
         return pts;
       }
 
-      function draw_points(pts){
+      function draw_points(pts, color){
+          if (typeof(color)==='undefined') color = "black";
           for(i=0;i<pts.length;i++){
 
               context.beginPath();
@@ -34,21 +35,33 @@
               context.fillStyle = '#FF0000';
               context.fill();
               context.lineWidth = 1;
-              context.strokeStyle = 'black';
+              context.strokeStyle = color;
               context.stroke();
           }
         return;
       }
 
       function find_eigen2(m){
-        return;
+
+          var trace = m[0][0]+m[1][1];
+          var det = m[0][0]*m[1][1] -m[0][1]*m[1][0];
+          var l1=trace/2.0 + Math.sqrt((trace*trace/4)-det);
+          var l2=trace/2.0 - Math.sqrt((trace*trace/4)-det);
+
+          var evec1=[1,0];
+          var evec2=[0,1];
+          if (m[1][0] != 0){
+              evec1=[l1-m[1][1],m[1][0]];
+              evec2=[l2-m[1][1],m[1][0]];
+          }
+          return [l1,evec1,l2,evec2];
           }
 
 
 
       function find_average(pts){
           c=[0,0];
-          for(i=0;i<pts.length;i++){
+          for(var i=0;i<pts.length;i++){
           c[0]+=pts[i][0];
           c[1]+=pts[i][1];
           }
@@ -59,33 +72,88 @@
 
 
       function find_covariance_mat(pts,c){
-        cv_mat=[[0,0],[0,0]];
-
+          cv_mat=[[0,0],[0,0]];
+          for(var i=0;i<pts.length;i++){
+            cv_mat[0][0]+=(pts[i][0]-c[0])*(pts[i][0]-c[0]);
+            cv_mat[1][1]+=(pts[i][1]-c[1])*(pts[i][1]-c[1]);
+            cv_mat[1][0]+=(pts[i][1]-c[1])*(pts[i][0]-c[0]);
+            cv_mat[0][1]=cv_mat[1][0];
+          }
+          //console.log("Matrix", cv_mat[0][0],cv_mat[0][1],cv_mat[1][0],cv_mat[1][1]);
+          cv_mat[0][0]/=(pts.length-1);
+          cv_mat[1][0]/=(pts.length-1);
+          cv_mat[0][1]/=(pts.length-1);
+          cv_mat[1][1]/=(pts.length-1);
+          //console.log("Matrix", cv_mat[0][0],cv_mat[0][1],cv_mat[1][0],cv_mat[1][1]);
         return cv_mat;
       }
 
+      function inner_product(v1,v2)
+        {
+            var prod=0;
+            for(var i=0;i<v1.length; i++){
+                prod+=(v1[i]*v2[i]);
+            }
+            return prod;
+        }
+
+      function normalize(v){
+          var n = Math.sqrt(inner_product(v,v));
+          return scalar_mult(1/n,v);
+      }
 
 
-      function draw_vectors(center,v1,v2,ctx){
+      function vec_add(v1,v2)
+        {
+            var sum = [];
+            for(var i=0;i<v1.length; i++)
+               sum.push(v1[i]+v2[i]);
+            return sum;
+        }
 
+      function vec_subtract(v1,v2)
+        {
+            var diff = [];
+            for(var i=0;i<v1.length; i++)
+               diff.push(v1[i]-v2[i]);
+            return diff;
+        }
+
+      function scalar_mult(alpha,v)
+        {
+            var prod = [];
+            for(var i=0;i<v.length; i++)
+               prod.push(v[i]*alpha);
+            return prod;
+        }
+
+
+      function find_box(pts, e1, e2, center)
+        {
+            //Your code goes here
+
+            return corners;
+
+        }
+
+      function log_v(v)
+        {
+            console.log("Vector ");
+            for(var i=0;i<v.length;i++)
+                console.log(v[i]);
+        }
+
+
+      function draw_box(corners,ctx){
           context.beginPath();
-          ctx.moveTo(center[0], center[1]);
-      	  ctx.lineTo(center[0]+v1[0], center[1]+v1[1]);
+          ctx.moveTo(corners[0][0], corners[0][1]);
+          for(var i=1;i<(corners.length+1);i++)
+      	     ctx.lineTo(corners[i% corners.length][0],corners[i% corners.length][1]);
       	  ctx.lineWidth = 1;
       	  // set line color
       	  ctx.strokeStyle = '#000000';
       	  ctx.stroke();
-
-          context.beginPath();
-          ctx.moveTo(center[0], center[1]);
-      	  ctx.lineTo(center[0]+v2[0], center[1]+v2[1]);
-      	  ctx.lineWidth = 1;
-      	  // set line color
-      	  ctx.strokeStyle = '#000000';
-      	  ctx.stroke();
-
-
-        return;
+          return;
       }
 
       var canvas = document.getElementById('myCanvas');
@@ -95,8 +163,9 @@
       draw_points(pts);
       var c= find_average(pts);
       var cv_mat=find_covariance_mat(pts,c);
-      eig = find_eigen2(cv_mat);
-      draw_vectors(c,eig[1],eig[3],context);
+      var eig = find_eigen2(cv_mat);
+      var corners = find_box(pts,eig[1],eig[3],c);
+      draw_box(corners,context);
     </script>
   </body>
 </html>
