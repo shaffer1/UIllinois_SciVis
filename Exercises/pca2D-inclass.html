@@ -73,18 +73,9 @@
 
       function find_covariance_mat(pts,c){
           cv_mat=[[0,0],[0,0]];
-          for(var i=0;i<pts.length;i++){
-            cv_mat[0][0]+=(pts[i][0]-c[0])*(pts[i][0]-c[0]);
-            cv_mat[1][1]+=(pts[i][1]-c[1])*(pts[i][1]-c[1]);
-            cv_mat[1][0]+=(pts[i][1]-c[1])*(pts[i][0]-c[0]);
-            cv_mat[0][1]=cv_mat[1][0];
-          }
-          //console.log("Matrix", cv_mat[0][0],cv_mat[0][1],cv_mat[1][0],cv_mat[1][1]);
-          cv_mat[0][0]/=(pts.length-1);
-          cv_mat[1][0]/=(pts.length-1);
-          cv_mat[0][1]/=(pts.length-1);
-          cv_mat[1][1]/=(pts.length-1);
-          //console.log("Matrix", cv_mat[0][0],cv_mat[0][1],cv_mat[1][0],cv_mat[1][1]);
+          //Your code goes here
+          
+          
         return cv_mat;
       }
 
